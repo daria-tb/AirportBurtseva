@@ -21,6 +21,15 @@ public class Flight
 
     public override string ToString()
     {
-        return $"{FlightNumber} to {Destination} - {Status} (Departs at {DepartureTime}, Seats {Capacity})";
+        string statusText = Status switch
+        {
+            FlightStatus.OnTime   => "Вчасно",
+            FlightStatus.Delayed  => "Затримано",
+            FlightStatus.Boarding => "Посадка",
+            FlightStatus.Departed => "Вилетів",
+            _ => Status.ToString()
+        };
+
+        return $"{FlightNumber} до {Destination} - {statusText} (Виліт о {DepartureTime}, Місць {Capacity})";
     }
 }

@@ -16,7 +16,8 @@ public class Passenger
 
     public override string ToString()
     {
-        return $"{Name} ({FlightNumber}) - " +
-               $"Ticket: {HasTicket}, Security: {PassedSecurity}, OnBoard: {IsOnBoard}";
-    }
+        return $"{Name} (Рейс {FlightNumber}) - " +
+               $"Квиток: {(HasTicket ? "є" : "немає")}, " +
+               $"Контроль: {(PassedSecurity ? "пройшов" : "не пройшов")}, " +
+               $"На борту: {(IsOnBoard ? "так" : "ні")}";    }
 }
