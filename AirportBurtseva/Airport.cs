@@ -24,22 +24,23 @@ public class Airport
 
     public void RunSimulation()
     {
-        while (true)
+        while (flights.Any(f => f.Status != FlightStatus.Departed)) // 🔹 симуляція триває поки є рейси, що не вилетіли
         {
             Console.Clear();
             Console.WriteLine($"Час симуляції: {time}");
 
-            //можлива поява нового пасажира
-            if (rand.NextDouble() < 0.8) // 80% шанс
+            // 🔹 поява нового пасажира тільки для рейсів, які ще не вилетіли
+            var activeFlights = flights.Where(f => f.Status != FlightStatus.Departed).ToList();
+            if (activeFlights.Count > 0 && rand.NextDouble() < 0.8) // 80% шанс
             {
-                var flight = flights[rand.Next(flights.Count)];
+                var flight = activeFlights[rand.Next(activeFlights.Count)];
                 var passenger = new Passenger($"Пасажир{passengers.Count + 1}", flight.FlightNumber);
                 passengers.Add(passenger);
                 checkInQueue.Enqueue(passenger);
                 Console.WriteLine($"Новий пасажир: {passenger.Name} для рейсу {flight.FlightNumber}");
             }
 
-            //реєстрація
+            // реєстрація
             for (int i = 0; i < checkInDesks && checkInQueue.Count > 0; i++)
             {
                 var p = checkInQueue.Dequeue();
@@ -48,7 +49,7 @@ public class Airport
                 Console.WriteLine($"{p.Name} зареєструвався на рейс {p.FlightNumber}");
             }
 
-            //контроль безпеки
+            // контроль безпеки
             for (int i = 0; i < securityPoints && securityQueue.Count > 0; i++)
             {
                 var p = securityQueue.Dequeue();
@@ -57,16 +58,19 @@ public class Airport
                 Console.WriteLine($"{p.Name} пройшов контроль безпеки");
             }
 
-            //оновлення статусів рейсів
+            // оновлення статусів рейсів
             foreach (var flight in flights.ToList())
             {
+                if (flight.Status == FlightStatus.Departed)
+                    continue; // 🔹 пропускаємо вже вилетілий рейс
+
                 if (time == flight.DepartureTime - 2)
                     flight.Status = FlightStatus.Boarding;
 
                 if (time >= flight.DepartureTime)
                     flight.Status = FlightStatus.Departed;
 
-                //посадка
+                // посадка
                 if (flight.Status == FlightStatus.Boarding)
                 {
                     var readyToBoard = waitingForBoarding
@@ -82,18 +86,21 @@ public class Airport
                     }
                 }
 
-                //виліт
+                // виліт
                 if (flight.Status == FlightStatus.Departed)
                 {
-                    var departedPassengers = passengers.Where(p => p.FlightNumber == flight.FlightNumber && p.IsOnBoard).ToList();
+                    var departedPassengers = passengers
+                        .Where(p => p.FlightNumber == flight.FlightNumber && p.IsOnBoard)
+                        .ToList();
+
                     foreach (var p in departedPassengers)
                         passengers.Remove(p);
 
-                    Console.WriteLine($"Рейс {flight.FlightNumber} вилетів з {flight.BoardedCount}/{flight.Capacity} пасажирами");
+                    Console.WriteLine($"✈ Рейс {flight.FlightNumber} вилетів з {flight.BoardedCount}/{flight.Capacity} пасажирами");
                 }
             }
 
-            //вивід інформації
+            // вивід інформації
             Console.WriteLine("\nРейси:");
             foreach (var flight in flights)
             {
@@ -119,9 +126,11 @@ public class Airport
 
             Console.WriteLine($"\nЧерги: Реєстрація={checkInQueue.Count}, Контроль={securityQueue.Count}, Очікування={waitingForBoarding.Count(p => !p.IsOnBoard)}");
 
-            //крок часу
+            // крок часу
             time++;
             Thread.Sleep(2000);
         }
+
+        Console.WriteLine("\nВсі рейси вилетіли. Симуляцію завершено!");
     }
 }
